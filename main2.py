@@ -352,53 +352,40 @@ async def on_message(message):
 
 
 
-
-
 # SLASH COMMANDS
 
-# Setup commands
-setup = discord.SlashCommandGroup("setup", "Setup related commands")
+# About command
+@bot.slash_command()
+async def about(ctx):
 
-# Initialize.
-@setup.command()
-async def init(ctx):
+    # Variables
+    DESCRIPTION = "Tool suite designed for synchronizing announcements and events between Discord servers."
 
-    # Check admin
-    if not(await verify_admin(ctx)):
+    # Create embed
+    embed = discord.Embed(title="About Raindrop",
+                          description=DESCRIPTION,
+                          url="https://github.com/osteofelidae/Raindrop",
+                          color=DISCORD_EMBED_COLOR)
 
-        # Return error message
-        await ctx_respond(ctx, "error", "Insufficient permissions.")
+    # Set author
+    embed.set_author(
+        name="Made with pride by osteofelidae",
+        url="https://osteofelidae.github.io/",
+        icon_url="https://avatars.githubusercontent.com/u/115187283?s=40&v=4"
+    )
 
-        # Stop function
-        return
+    # Add field
+    embed.add_field(name="GitHub repo/readme:",
+                    value="https://github.com/osteofelidae/Raindrop")
+
+    # Send message
+    await ctx.respond(embed=embed)
 
 
-    # Globals
-    global user_data
-
-    # Try to setup
-    try:
-
-        # Set user data
-        user_data[int(ctx.guild.id)] = {}
-
-        # Send confirmation
-        await ctx_respond(ctx, "success", f"Successfully initialized server settings.")
-
-        # Save data
-        save_dict(user_data, CONFIG_FILENAME)
-
-    except:
-
-        # Console print
-        console_print("error", f"Failed to setup_init in {ctx.guild.name}")
-
-        # Respond
-        await ctx_respond(ctx, "error", "Could not set up initialize. This is a critical error.")
 
 # Setup command
 @bot.slash_command()
-async def setup_all(ctx,
+async def setup(ctx,
               announcement_channel: discord.TextChannel = "",
               bot_channel: discord.TextChannel = "",
               sync_list: str = "",
@@ -575,140 +562,7 @@ async def setup_all(ctx,
 
 
 
-# Setup announcement channel
-@setup.command()
-async def announcement_channel(ctx,
-                               announcement_channel: discord.TextChannel):
-
-    # Check admin
-    if not (await verify_admin(ctx)):
-        # Return error message
-        await ctx_respond(ctx, "error", "Insufficient permissions.")
-
-        # Stop function
-        return
-
-    # Variables
-    set_type = "announcement_channel"
-
-    # Globals
-    global user_data
-
-    # Try to setup
-    try:
-
-        # Set user data
-        user_data[int(ctx.guild.id)][set_type] = announcement_channel.id
-
-        # Save dict
-        save_dict(user_data, CONFIG_FILENAME)
-
-        # Console print
-        console_print("success", f"Successfully set {set_type} to {announcement_channel.name}")
-
-        # Send confirmation
-        await ctx_respond(ctx, "success", f"Successfully set {set_type} to {announcement_channel.mention}")
-
-
-    except:
-
-        # Console print
-        console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
-
-        # Respond
-        await ctx_respond(ctx, "error", f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
-
-# Setup bot channel
-@setup.command()
-async def bot_channel(ctx,
-                               bot_channel: discord.TextChannel):
-
-    # Check admin
-    if not (await verify_admin(ctx)):
-        # Return error message
-        await ctx_respond(ctx, "error", "Insufficient permissions.")
-
-        # Stop function
-        return
-
-    # Variables
-    set_type = "bot_channel"
-
-    # Globals
-    global user_data
-
-    # Try to setup
-    try:
-
-        # Set user data
-        user_data[int(ctx.guild.id)][set_type] = bot_channel.id
-
-        # Save dict
-        save_dict(user_data, CONFIG_FILENAME)
-
-        # Console print
-        console_print("success", f"Successfully set {set_type} to {bot_channel.name}")
-
-        # Send confirmation
-        await ctx_respond(ctx, "success", f"Successfully set {set_type} to {bot_channel.mention}")
-
-
-    except:
-
-        # Console print
-        console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
-
-        # Respond
-        await ctx_respond(ctx, "error", f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
-
-# Setup sync list
-@setup.command()
-async def sync_list(ctx,
-                               sync_list: str):
-
-    # Check admin
-    if not (await verify_admin(ctx)):
-        # Return error message
-        await ctx_respond(ctx, "error", "Insufficient permissions.")
-
-        # Stop function
-        return
-
-    # Variables
-    set_type = "sync_list"
-
-    # Globals
-    global user_data
-
-    # Try to setup
-    try:
-
-        # Set user data
-        user_data[int(ctx.guild.id)][set_type] = sync_list
-
-        # Save dict
-        save_dict(user_data, CONFIG_FILENAME)
-
-        # Console print
-        console_print("success", f"Successfully set {set_type} to {sync_list}")
-
-        # Send confirmation
-        await ctx_respond(ctx, "success", f"Successfully set {set_type} to {sync_list}")
-
-
-    except:
-
-        # Console print
-        console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
-
-        # Respond
-        await ctx_respond(ctx, "error", f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
-
-# TODO setup auto event thing
-
-
-# TODO: 'create' command group, announcement and event
-# Create commands
+# Do commands
 do = discord.SlashCommandGroup("do", "Create something")
 
 # Announcement command
@@ -846,14 +700,8 @@ async def cross_ban(ctx,
 
 
 
-
-
-
 # REGISTER COMMAND GROUPS
-# bot.add_application_command(setup) # DEPRECIATED
 bot.add_application_command(do)
-
-
 
 
 
