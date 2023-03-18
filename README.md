@@ -1,6 +1,6 @@
 # Raindrop
 
-A discord bot for synchronizing announcements, , events, and bans between servers.
+A discord bot for synchronizing announcements, events, and bans between servers.
 
 
 
