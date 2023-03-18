@@ -15,6 +15,9 @@ CTX_FAILURE_COLOR = 0xFF0000
 # Config file name
 CONFIG_FILENAME = "config.json"
 
+# File opened
+file_open = False
+
 # TODO Bot token
 BOT_TOKEN = open("TOKEN.txt").read()
 
@@ -40,22 +43,35 @@ def console_print(msgType: str, msgText: str):
 
 # Function to save settings
 def save_dict(dictIn: dict, fileName: str):
-    # Open file
-    file_object = open(fileName, "w")
 
-    # Try dumping
-    try:
+    # Globals
+    global file_open
 
-        # Dump to file
-        json.dump(dictIn, file_object)
+    # If file is not open
+    if not(file_open):
 
-    except:
+        # Set file open
+        file_open = True
 
-        # Return error
-        console_print("error", "Critical error writing to savefile.")
+        # Open file
+        file_object = open(fileName, "w")
 
-    # Close file
-    file_object.close()
+        # Try dumping
+        try:
+
+            # Dump to file
+            json.dump(dictIn, file_object)
+
+        except:
+
+            # Return error
+            console_print("error", "Critical error writing to savefile.")
+
+        # Close file
+        file_object.close()
+
+        # Set file closed
+        file_open = False
 
 # def get_dict(dictIn: dict):
 def get_dict(fileName: str):
@@ -423,9 +439,6 @@ async def setup(ctx,
             # Set user data
             user_data[int(ctx.guild.id)][set_type] = announcement_channel.id
 
-            # Save dict
-            save_dict(user_data, CONFIG_FILENAME)
-
             # Console print
             console_print("success", f"Successfully set {set_type} to {announcement_channel.name}")
 
@@ -452,9 +465,6 @@ async def setup(ctx,
             # Set user data
             user_data[int(ctx.guild.id)][set_type] = bot_channel.id
 
-            # Save dict
-            save_dict(user_data, CONFIG_FILENAME)
-
             # Console print
             console_print("success", f"Successfully set {set_type} to {bot_channel.name}")
 
@@ -480,9 +490,6 @@ async def setup(ctx,
 
             # Set user data
             user_data[int(ctx.guild.id)][set_type] = sync_list
-
-            # Save dict
-            save_dict(user_data, CONFIG_FILENAME)
 
             # Console print
             console_print("success", f"Successfully set {set_type} to {sync_list}")
@@ -511,9 +518,6 @@ async def setup(ctx,
             # Set user data
             user_data[int(ctx.guild.id)][set_type] = auto_event
 
-            # Save dict
-            save_dict(user_data, CONFIG_FILENAME)
-
             # Console print
             console_print("success", f"Successfully set {set_type} to {auto_event}")
 
@@ -541,9 +545,6 @@ async def setup(ctx,
             # Set user data
             user_data[int(ctx.guild.id)][set_type] = auto_announce
 
-            # Save dict
-            save_dict(user_data, CONFIG_FILENAME)
-
             # Console print
             console_print("success", f"Successfully set {set_type} to {auto_announce}")
 
@@ -559,6 +560,9 @@ async def setup(ctx,
             # Respond
             await ctx_respond(ctx, "error",
                               f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
+
+    # Save dict
+    save_dict(user_data, CONFIG_FILENAME)
 
 
 
