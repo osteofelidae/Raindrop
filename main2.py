@@ -1,3 +1,5 @@
+# TODO: blacklist
+
 # DEPENDENCIES
 
 import discord
@@ -440,7 +442,7 @@ async def setup(ctx,
             user_data[int(ctx.guild.id)][set_type] = announcement_channel.id
 
             # Console print
-            console_print("success", f"Successfully set {set_type} to {announcement_channel.name}")
+            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {announcement_channel.name}")
 
             # Send confirmation
             await ctx_respond(ctx, "success", f"Successfully set {set_type} to {announcement_channel.mention}")
@@ -449,7 +451,7 @@ async def setup(ctx,
         except:
 
             # Console print
-            console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
+            console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
             await ctx_respond(ctx, "error",
@@ -466,7 +468,7 @@ async def setup(ctx,
             user_data[int(ctx.guild.id)][set_type] = bot_channel.id
 
             # Console print
-            console_print("success", f"Successfully set {set_type} to {bot_channel.name}")
+            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {bot_channel.name}")
 
             # Send confirmation
             await ctx_respond(ctx, "success", f"Successfully set {set_type} to {bot_channel.mention}")
@@ -474,7 +476,7 @@ async def setup(ctx,
         except:
 
             # Console print
-            console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
+            console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
             await ctx_respond(ctx, "error",
@@ -492,7 +494,7 @@ async def setup(ctx,
             user_data[int(ctx.guild.id)][set_type] = sync_list
 
             # Console print
-            console_print("success", f"Successfully set {set_type} to {sync_list}")
+            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {sync_list}")
 
             # Send confirmation
             await ctx_respond(ctx, "success", f"Successfully set {set_type} to {sync_list}")
@@ -501,7 +503,7 @@ async def setup(ctx,
         except:
 
             # Console print
-            console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
+            console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
             await ctx_respond(ctx, "error",
@@ -519,7 +521,7 @@ async def setup(ctx,
             user_data[int(ctx.guild.id)][set_type] = auto_event
 
             # Console print
-            console_print("success", f"Successfully set {set_type} to {auto_event}")
+            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {auto_event}")
 
             # Send confirmation
             await ctx_respond(ctx, "success", f"Successfully set {set_type} to {auto_event}")
@@ -528,7 +530,7 @@ async def setup(ctx,
         except:
 
             # Console print
-            console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
+            console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
             await ctx_respond(ctx, "error",
@@ -546,7 +548,7 @@ async def setup(ctx,
             user_data[int(ctx.guild.id)][set_type] = auto_announce
 
             # Console print
-            console_print("success", f"Successfully set {set_type} to {auto_announce}")
+            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {auto_announce}")
 
             # Send confirmation
             await ctx_respond(ctx, "success", f"Successfully set {set_type} to {auto_announce}")
@@ -555,7 +557,7 @@ async def setup(ctx,
         except:
 
             # Console print
-            console_print("warning", f"Failed to setup {set_type} in {ctx.guild.name}")
+            console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
             await ctx_respond(ctx, "error",
@@ -580,6 +582,9 @@ async def announce(ctx,
     # Check setup of server
     if not(check_setup(ctx)):
 
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to announce when server was not set up")
+
         # Return error message
         await ctx_respond(ctx, "error", "Server is not fully set up. Please run all setup commands.")
 
@@ -588,6 +593,9 @@ async def announce(ctx,
 
     # Check admin
     if not (await verify_admin(ctx)):
+
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to announce, but the user had insufficient permissions")
 
         # Return error message
         await ctx_respond(ctx, "error", "Insufficient permissions.")
@@ -632,6 +640,9 @@ async def announce(ctx,
 
     except:
 
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to announce when server was not set up")
+
         # Return error
         await ctx_respond(ctx, "error", "Could not announce. This could be because the server is not properly set up.")
 
@@ -652,6 +663,10 @@ async def cross_ban(ctx,
 
     # Check setup of server
     if not (check_setup(ctx)):
+
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to cross ban when server was not set up")
+
         # Return error message
         await ctx_respond(ctx, "error", "Server is not fully set up. Please run all setup commands.")
 
@@ -660,6 +675,10 @@ async def cross_ban(ctx,
 
     # Check admin
     if not (await verify_admin(ctx)):
+
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to cross ban but user had insufficient permissions")
+
         # Return error message
         await ctx_respond(ctx, "error", "Insufficient permissions.")
 
@@ -673,6 +692,9 @@ async def cross_ban(ctx,
         await ctx.guild.ban(user)
 
     except:
+
+        # Console print
+        console_print("error", f"{ctx.guild.name}: Failed to ban user")
 
         # Return error
         await ctx_respond(ctx, "error", "Could not ban.")
