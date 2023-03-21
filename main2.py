@@ -1,5 +1,3 @@
-# TODO: blacklist, lockable sync codes
-
 # DEPENDENCIES
 
 import discord
@@ -14,24 +12,29 @@ DISCORD_EMBED_COLOR = 0x87CEEB
 CTX_SUCCESS_COLOR = 0x00FF00
 CTX_FAILURE_COLOR = 0xFF0000
 
-# Config file name
+# Save file names
 CONFIG_FILENAME = "config.json"
+LOCKED_FILENAME = "locked.json" # List of locked sync codes
+BLACKLIST_FILENAME = "blacklist.json" # List of blacklisted servers
+
 
 # File opened
 file_open = False
 
-# TODO Bot token
+# TBot token
 BOT_TOKEN = open("TOKEN.txt").read()
 
 # Intents
 intents = discord.Intents.default()
-intents.message_content = True;
+intents.message_content = True
 
 # Client
 bot = discord.Bot(intents=intents)
 
 # User data (settings)
 user_data = {}
+locked_codes = {}
+blacklist = {}
 
 
 
@@ -88,23 +91,26 @@ def get_dict(fileName: str):
     file_object.close()
 
     # Return
-    return dictIn
+    return fix_dict(dictIn)
 
 # Fix dict
-def fix_user_data_dict():
-
-    # Globals
-    global user_data
+def fix_dict(dict_in: dict):
 
     # Temp var
     tempDict = {}
 
-    # Iterate through dict
-    for key in user_data:
+    try:
 
-        tempDict[int(key)] = user_data[key]
+        # Iterate through dict
+        for key in dict_in:
 
-    user_data = tempDict
+            tempDict[int(key)] = dict_in[key]
+
+    except:
+
+        tempDict = dict_in
+
+    return tempDict
 
 # Format number
 def number_format(input: str, decimals: int):
@@ -260,6 +266,24 @@ async def verify_osteofelidae(ctx):
 
         return False
 
+# Check blacklist - return false if blacklisted
+def check_blacklist(ctx):
+
+    # try
+    try:
+
+        # If guild id is blocked (blacklist[id] true if blocked)
+        if blacklist[int(ctx.guild.id)]:
+
+            return False
+
+    except:
+
+        pass
+
+    # Return
+    return True
+
 
 
 # EVENTS
@@ -269,11 +293,12 @@ async def verify_osteofelidae(ctx):
 async def on_ready():
 
     # Globals
-    global user_data
+    global user_data, blacklist, locked_codes
 
     # Get user data
     user_data = get_dict(CONFIG_FILENAME)
-    fix_user_data_dict()
+    blacklist = get_dict(BLACKLIST_FILENAME)
+    locked_codes = get_dict(LOCKED_FILENAME)
 
     # Print status
     console_print("success", f"Logged in as {bot.user}")
@@ -365,20 +390,29 @@ async def on_message(message):
         # Stop function
         return
 
-    # TODO tester
-    if message.channel.id == user_data[message.guild.id]["announcement_channel"] and not(message.author.bot):
+    # Try propagate
+    try:
 
-        # Try check enabled
-        try:
+        # Propagate announcement
+        if message.channel.id == user_data[message.guild.id]["announcement_channel"] and not(message.author.bot):
 
-            if not (user_data[message.guild.id]["auto_announce"]):
-                return
+            # Try check enabled
+            try:
 
-        except:
+                if not (user_data[message.guild.id]["auto_announce"]):
+                    return
 
-            pass
+            except:
 
-        await propagate_message(message, message)
+                pass
+
+            await propagate_message(f"*Via {message.guild.name}*" + message, message)
+
+            console_print("success", f"Propagated announcement from {message.guild.name}")
+
+    except:
+
+        console_print("error", f"Failed to propagate announcement from {message.guild.name}")
 
 
 
@@ -433,6 +467,14 @@ async def setup(ctx,
     if not (await verify_admin(ctx)):
         # Return error message
         await ctx_respond(ctx, "error", "Insufficient permissions.")
+
+        # Stop function
+        return
+
+    # Check blacklist
+    if not (check_blacklist(ctx)):
+        # Return error message
+        await ctx_respond(ctx, "error", "Server is not permitted to use this bot.")
 
         # Stop function
         return
@@ -512,30 +554,52 @@ async def setup(ctx,
 
         # Variables
         set_type = "sync_list"
+        do_sync = True
 
-        # Try to setup
+        # Check if blocked
         try:
 
-            # Set user data
-            user_data[int(ctx.guild.id)][set_type] = sync_list
+            if locked_codes[sync_list]:
 
-            # Console print
-            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {sync_list}")
+                # Console print
+                console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type} as it is locked")
 
-            # Send confirmation
-            output_string += f"Successfully set {set_type} to {sync_list}\n"
+                # Respond
+                output_string += f"Could not set up {set_type} as this sync list is locked.\n"
+
+                # Set error
+                error_exists = True
+                do_sync = False
 
 
         except:
 
-            # Console print
-            console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
+            pass
 
-            # Respond
-            output_string += f"Could not set up {set_type}.\n"
+        # Try to setup
+        if do_sync:
+            try:
 
-            # Set error
-            error_exists = True
+                # Set user data
+                user_data[int(ctx.guild.id)][set_type] = sync_list
+
+                # Console print
+                console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {sync_list}")
+
+                # Send confirmation
+                output_string += f"Successfully set {set_type} to {sync_list}\n"
+
+
+            except:
+
+                # Console print
+                console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
+
+                # Respond
+                output_string += f"Could not set up {set_type}.\n"
+
+                # Set error
+                error_exists = True
 
     if auto_event != "":
 
@@ -699,6 +763,103 @@ async def announce(ctx,
     # Send confirmation
     await ctx_respond(ctx, "success", f"Successfully sent announcement.")
 
+@do.command(description="Sends an announcement to this server only.")
+async def local_announce(ctx,
+                   title: str,
+                   content: str,
+                   url = "",
+                   ping_role: discord.Role = ""):
+
+    # Check setup of server
+    if not(check_setup(ctx)):
+
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to announce when server was not set up")
+
+        # Return error message
+        await ctx_respond(ctx, "error", "Server is not fully set up. Please run all setup commands.")
+
+        # Stop function
+        return
+
+    # Check admin
+    if not (await verify_admin(ctx)):
+
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to announce, but the user had insufficient permissions")
+
+        # Return error message
+        await ctx_respond(ctx, "error", "Insufficient permissions.")
+
+        # Stop function
+        return
+
+    # Try create embed
+    try:
+
+        # Create embed
+        embed = discord.Embed(title=title,
+                              description=content,
+                              color=DISCORD_EMBED_COLOR)
+
+        # Set url if exists
+        if url != "":
+
+            embed.url = url
+
+        # Set author
+        embed.set_author(
+            name=ctx.guild.name,
+        )
+        embed.set_author(
+            name=ctx.guild.name,
+            icon_url=ctx.guild.icon.url
+        )
+
+    except:
+
+        # Continue
+        pass
+
+    # Ping
+    try:
+
+        if ping_role != "":
+
+            # Send ping
+            await bot.get_channel(user_data[int(ctx.guild.id)]["announcement_channel"]).send(ping_role.mention)
+
+    except:
+
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to announce when server was not set up")
+
+        # Return error
+        await ctx_respond(ctx, "error", "Could not announce. This could be because the server is not properly set up.")
+
+        # Stop function
+        return
+
+    # Try send message to own server
+    try:
+
+        # Send message
+        await bot.get_channel(user_data[ctx.guild.id]["announcement_channel"]).send(embed=embed)
+
+    except:
+
+        # Console print error
+        console_print("warning", f"Could not send announcement in server {ctx.guild.name}")
+
+        # Return error
+        await ctx_respond(ctx, "error", "Could not announce. This could be because the server is not properly set up.")
+
+        # Stop function because args or handle is wrong
+        return
+
+    # Send confirmation
+    await ctx_respond(ctx, "success", f"Successfully sent announcement.")
+
 # Cross ban command
 @do.command(description="Bans a user across all servers.")
 async def cross_ban(ctx,
@@ -771,8 +932,6 @@ async def cross_ban(ctx,
 # Admin commands
 admin = discord.SlashCommandGroup("admin", "Admin slash commands")
 
-# TODO blacklist
-
 # Rollback
 @admin.command(description="Delete last x messages in announcement channels")
 async def rollback(ctx,
@@ -783,7 +942,7 @@ async def rollback(ctx,
     output_string = ""
     error_exists = False
 
-    # Check admin
+    # Check if me
     if not (await verify_osteofelidae(ctx)):
         # Console print
         console_print("warning", f"{ctx.guild.name}: Attempted to run an admin command, but the user had insufficient permissions")
@@ -840,8 +999,74 @@ async def rollback(ctx,
     # Respond
     await ctx_respond(ctx, error_string, output_string)
 
+# Blacklist
+@admin.command(description="Edit server blacklist")
+async def blacklist_edit(ctx,
+                    server_id: str,
+                    blacklisted: bool = True):
+
+    # Check admin
+    if not (await verify_osteofelidae(ctx)):
+        # Console print
+        console_print("warning",
+                      f"{ctx.guild.name}: Attempted to run an admin command, but the user had insufficient permissions")
+
+        # Return error message
+        await ctx_respond(ctx, "error", "Insufficient permissions.")
+
+        # Stop function
+        return
+
+    # Set blacklist to input (default true)
+    blacklist[int(server_id)] = blacklisted
+
+    # Reset server settings
+    user_data[int(server_id)] = {}
+
+    # Update savefiles
+    save_dict(user_data, CONFIG_FILENAME)
+    save_dict(blacklist, BLACKLIST_FILENAME)
+
+    # Console print
+    console_print("success", f"Successfully blacklisted server id {server_id}")
+
+    # Return success
+    await ctx_respond(ctx, "success", f"Successfully blacklisted server id {server_id}")
+
+# Lock syncgroup
+@admin.command(description="Edit locked codes")
+async def sync_group_edit(ctx,
+                    sync_code: str,
+                    locked: bool = True):
+
+    # Check admin
+    if not (await verify_osteofelidae(ctx)):
+
+        # Console print
+        console_print("warning",
+                      f"{ctx.guild.name}: Attempted to run an admin command, but the user had insufficient permissions")
+
+        # Return error message
+        await ctx_respond(ctx, "error", "Insufficient permissions.")
+
+        # Stop function
+        return
+
+    # Set blacklist to true
+    locked_codes[sync_code] = locked
+
+    # Update savefile
+    save_dict(locked_codes, LOCKED_FILENAME)
+
+    # Console print
+    console_print("success", f"Successfully edited {sync_code}")
+
+    # Return success
+    await ctx_respond(ctx, "success", f"Successfully edited {sync_code}")
+
 
 # REGISTER COMMAND GROUPS
+
 bot.add_application_command(do)
 bot.add_application_command(admin)
 
