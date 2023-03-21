@@ -1,4 +1,4 @@
-# TODO: blacklist
+# TODO: blacklist, lockable sync codes
 
 # DEPENDENCIES
 
@@ -248,6 +248,18 @@ def check_setup(ctx):
 
         return False
 
+# Check if osteofelidae
+async def verify_osteofelidae(ctx):
+
+    # Check if it is me
+    if ctx.author.id == 446592818136219648:
+
+        return True
+
+    else:
+
+        return False
+
 
 
 # EVENTS
@@ -373,7 +385,7 @@ async def on_message(message):
 # SLASH COMMANDS
 
 # About command
-@bot.slash_command()
+@bot.slash_command(description="Returns info about the bot.")
 async def about(ctx):
 
     # Variables
@@ -402,13 +414,17 @@ async def about(ctx):
 
 
 # Setup command
-@bot.slash_command()
+@bot.slash_command(description="Setup command for the bot.")
 async def setup(ctx,
               announcement_channel: discord.TextChannel = "",
               bot_channel: discord.TextChannel = "",
               sync_list: str = "",
               auto_event: bool = "",
               auto_announce: bool = ""):
+
+    # Output variable
+    output_string = ""
+    error_exists = False
 
     # Globals
     global user_data
@@ -430,6 +446,12 @@ async def setup(ctx,
 
         user_data[ctx.guild.id] = {}
 
+        # Console print
+        console_print("success", f"{ctx.guild.name}: Successfully initialized")
+
+        # Send confirmation
+        output_string += "Successfully initialized server\n"
+
     if announcement_channel != "":
 
         # Variables
@@ -445,7 +467,7 @@ async def setup(ctx,
             console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {announcement_channel.name}")
 
             # Send confirmation
-            await ctx_respond(ctx, "success", f"Successfully set {set_type} to {announcement_channel.mention}")
+            output_string += f"Successfully set {set_type} to {announcement_channel.mention}\n"
 
 
         except:
@@ -454,8 +476,10 @@ async def setup(ctx,
             console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
-            await ctx_respond(ctx, "error",
-                              f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
+            output_string += f"Could not set up {set_type}.\n"
+
+            # Set error
+            error_exists = True
 
     if bot_channel != "":
 
@@ -471,7 +495,7 @@ async def setup(ctx,
             console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {bot_channel.name}")
 
             # Send confirmation
-            await ctx_respond(ctx, "success", f"Successfully set {set_type} to {bot_channel.mention}")
+            output_string += f"Successfully set {set_type} to {bot_channel.mention}\n"
 
         except:
 
@@ -479,8 +503,10 @@ async def setup(ctx,
             console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
-            await ctx_respond(ctx, "error",
-                              f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
+            output_string += f"Could not set up {set_type}.\n"
+
+            # Set error
+            error_exists = True
 
     if sync_list != "":
 
@@ -497,7 +523,7 @@ async def setup(ctx,
             console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {sync_list}")
 
             # Send confirmation
-            await ctx_respond(ctx, "success", f"Successfully set {set_type} to {sync_list}")
+            output_string += f"Successfully set {set_type} to {sync_list}\n"
 
 
         except:
@@ -506,8 +532,10 @@ async def setup(ctx,
             console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
-            await ctx_respond(ctx, "error",
-                              f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
+            output_string += f"Could not set up {set_type}.\n"
+
+            # Set error
+            error_exists = True
 
     if auto_event != "":
 
@@ -524,7 +552,7 @@ async def setup(ctx,
             console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {auto_event}")
 
             # Send confirmation
-            await ctx_respond(ctx, "success", f"Successfully set {set_type} to {auto_event}")
+            output_string += f"Successfully set {set_type} to {auto_event}\n"
 
 
         except:
@@ -533,8 +561,10 @@ async def setup(ctx,
             console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
-            await ctx_respond(ctx, "error",
-                              f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
+            output_string += f"Could not set up {set_type}.\n"
+
+            # Set error
+            error_exists = True
 
     if auto_announce != "":
 
@@ -551,7 +581,7 @@ async def setup(ctx,
             console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {auto_announce}")
 
             # Send confirmation
-            await ctx_respond(ctx, "success", f"Successfully set {set_type} to {auto_announce}")
+            output_string += f"Successfully set {set_type} to {auto_announce}\n"
 
 
         except:
@@ -560,11 +590,25 @@ async def setup(ctx,
             console_print("warning", f"{ctx.guild.name}: Failed to setup {set_type}")
 
             # Respond
-            await ctx_respond(ctx, "error",
-                              f"Could not set up {set_type}. Try running '/setup init' first, then try again.")
+            output_string += f"Could not set up {set_type}.\n"
+
+            # Set error
+            error_exists = True
 
     # Save dict
     save_dict(user_data, CONFIG_FILENAME)
+
+    # Check for errors
+    if error_exists:
+
+        error_string = "error"
+
+    else:
+
+        error_string = "success"
+
+    # Respond
+    await ctx_respond(ctx, error_string, output_string)
 
 
 
@@ -572,7 +616,7 @@ async def setup(ctx,
 do = discord.SlashCommandGroup("do", "Create something")
 
 # Announcement command
-@do.command()
+@do.command(description="Sends an announcement to all servers.")
 async def announce(ctx,
                    title: str,
                    content: str,
@@ -656,7 +700,7 @@ async def announce(ctx,
     await ctx_respond(ctx, "success", f"Successfully sent announcement.")
 
 # Cross ban command
-@do.command()
+@do.command(description="Bans a user across all servers.")
 async def cross_ban(ctx,
                     user: discord.User,
                     reason: str = ""):
@@ -724,10 +768,82 @@ async def cross_ban(ctx,
     # Send confirmation
     await ctx_respond(ctx, "success", f"Successfully cross banned {user.name}.")
 
+# Admin commands
+admin = discord.SlashCommandGroup("admin", "Admin slash commands")
+
+# TODO blacklist
+
+# Rollback
+@admin.command(description="Delete last x messages in announcement channels")
+async def rollback(ctx,
+                   sync_list: str,
+                   message_count: int = 1,):
+
+    # Output variable
+    output_string = ""
+    error_exists = False
+
+    # Check admin
+    if not (await verify_osteofelidae(ctx)):
+        # Console print
+        console_print("warning", f"{ctx.guild.name}: Attempted to run an admin command, but the user had insufficient permissions")
+
+        # Return error message
+        await ctx_respond(ctx, "error", "Insufficient permissions.")
+
+        # Stop function
+        return
+
+    # Iterate through all channels
+    for guild_id in user_data:
+
+        # If guild is on the same sync list and is not in the same server
+        if user_data[guild_id]["sync_list"] == sync_list:
+
+            # Try send message
+            try:
+
+                # Loop n times for n messages
+                for index in range(message_count):
+
+                    # Delete message
+                    await (await bot.get_channel(user_data[guild_id]["announcement_channel"]).history(limit=1).flatten())[0].delete()
+
+                # Print
+                console_print("success",
+                              f"Rolled back {bot.get_guild(guild_id).name} (id {guild_id})")
+
+                # Respond
+                output_string += f"Rolled back {bot.get_guild(guild_id).name} (id {guild_id}).\n"
+
+            # Except: continue
+            except:
+
+                # Warn
+                console_print("warning", f"Could not roll back server {bot.get_guild(guild_id).name} (id {guild_id})")
+
+                # Respond
+                output_string += f"Failed to roll back {bot.get_guild(guild_id).name} (id {guild_id}).\n"
+
+                # Set error
+                error_exists = True
+
+    # Check for errors
+    if error_exists:
+
+        error_string = "error"
+
+    else:
+
+        error_string = "success"
+
+    # Respond
+    await ctx_respond(ctx, error_string, output_string)
 
 
 # REGISTER COMMAND GROUPS
 bot.add_application_command(do)
+bot.add_application_command(admin)
 
 
 
