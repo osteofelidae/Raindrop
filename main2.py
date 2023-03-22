@@ -152,13 +152,20 @@ async def propagate_embed(handle, embed):
             try:
 
                 # Send message
-                await bot.get_channel(user_data[guild_id]["announcement_channel"]).send(embed=embed)
+                await bot.get_channel(user_data[guild_id]["promotion_channel"]).send(embed=embed)
 
-            # Except: continue
+
+            # Except: try announcement channel
             except:
 
-                # Continue
-                pass
+                try:
+                    # Send message
+                    await bot.get_channel(user_data[guild_id]["announcement_channel"]).send(embed=embed)
+
+                except:
+
+                    # Continue
+                    pass
 
 # Propagate embed
 async def propagate_message(handle, message):
@@ -173,14 +180,23 @@ async def propagate_message(handle, message):
             try:
 
                 # Send message
-                await bot.get_channel(user_data[guild_id]["announcement_channel"]).send(content=message.content,
+                await bot.get_channel(user_data[guild_id]["promotion_channel"]).send(content=f"*Via {message.guild.name}:*\n" + message.content,
                                                                                         files=[await file.to_file() for file in message.attachments])
 
             # Except: continue
             except:
 
-                # Continue
-                pass
+                try:
+                    # Send message
+                    await bot.get_channel(user_data[guild_id]["announcement_channel"]).send(content=f"*Via {message.guild.name}:*\n" + message.content,
+                                                                                            files=[await file.to_file()
+                                                                                                   for file in
+                                                                                                   message.attachments])
+
+                except:
+
+                    # Continue
+                    pass
 
 # Respond to command context
 async def ctx_respond(ctx, type: str, text: str):
@@ -406,7 +422,7 @@ async def on_message(message):
 
                 pass
 
-            await propagate_message(f"*Via {message.guild.name}*" + message, message)
+            await propagate_message(message, message)
 
             console_print("success", f"Propagated announcement from {message.guild.name}")
 
@@ -451,7 +467,7 @@ async def about(ctx):
 @bot.slash_command(description="Setup command for the bot.")
 async def setup(ctx,
               announcement_channel: discord.TextChannel = "",
-              bot_channel: discord.TextChannel = "",
+              promotion_channel: discord.TextChannel = "",
               sync_list: str = "",
               auto_event: bool = "",
               auto_announce: bool = ""):
@@ -523,21 +539,21 @@ async def setup(ctx,
             # Set error
             error_exists = True
 
-    if bot_channel != "":
+    if promotion_channel != "":
 
         # Variables
-        set_type = "bot_channel"
+        set_type = "promotion_channel"
 
         # Try to setup
         try:
             # Set user data
-            user_data[int(ctx.guild.id)][set_type] = bot_channel.id
+            user_data[int(ctx.guild.id)][set_type] = promotion_channel.id
 
             # Console print
-            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {bot_channel.name}")
+            console_print("success", f"{ctx.guild.name}: Successfully set {set_type} to {promotion_channel.name}")
 
             # Send confirmation
-            output_string += f"Successfully set {set_type} to {bot_channel.mention}\n"
+            output_string += f"Successfully set {set_type} to {promotion_channel.mention}\n"
 
         except:
 

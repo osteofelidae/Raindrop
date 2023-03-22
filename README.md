@@ -18,7 +18,7 @@ Click the link: [https://discord.com/api/oauth2/authorize?client_id=108578040803
 ### Step 2: Run the setup command
 `setup([announcement_channel,] [bot_channel,] [sync_list,] [auto_event,] [auto_announce])` - Sets up server. All parameters must be input at some point for all features to work.
 * announcement_channel: The channel where other servers' announcements will be mirrored, and where announcements will be autodetected if auto_event == true.
-* bot_channel: The channel where asynchronous bot output will go. For admin use only.
+* promotion_channel: The channel where promotion from other servers will go.
 * sync_list: A code referring to the server group. Multiple servers with the same sync_list value will form a server group, and announcements will propagate between all servers in that group.
 * auto_event: Boolean value of whether an announcement is created and propagated automatically when an event is created.
 * auto_announce: Boolean value of whether an announcement is propagated automatically when it is sent in announcement_channel.
