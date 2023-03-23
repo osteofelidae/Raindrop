@@ -1,3 +1,5 @@
+# TODO cmd for creating invite
+
 # DEPENDENCIES
 
 import discord
@@ -1082,6 +1084,43 @@ async def sync_group_edit(ctx,
 
     # Return success
     await ctx_respond(ctx, "success", f"Successfully edited {sync_code}")
+
+# Return logs
+# TODO this
+@admin.command(description="Get logs")
+async def get_logs(ctx):
+
+    # Check admin
+    if not (await verify_osteofelidae(ctx)):
+        # Console print
+        console_print("warning",
+                      f"{ctx.guild.name}: Attempted to run an admin command, but the user had insufficient permissions")
+
+        # Return error message
+        await ctx_respond(ctx, "error", "Insufficient permissions.")
+
+        # Stop function
+        return
+
+
+# Return report (all logs in a readable manner)
+# TODO this
+@admin.command(description="Get report")
+async def get_report(ctx):
+
+    # Check admin
+    if not (await verify_osteofelidae(ctx)):
+        # Console print
+        console_print("warning",
+                      f"{ctx.guild.name}: Attempted to run an admin command, but the user had insufficient permissions")
+
+        # Return error message
+        await ctx_respond(ctx, "error", "Insufficient permissions.")
+
+        # Stop function
+        return
+
+
 
 
 # REGISTER COMMAND GROUPS
