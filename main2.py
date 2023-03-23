@@ -136,6 +136,9 @@ async def propagate_embed(handle, embed):
 
     except:
 
+        # Ctx respond
+        await ctx_respond(handle, "error", "Could not send message. This may be because the server is not fully set up.")
+
         # Console print error
         console_print("warning", f"Could not propagate event in server {handle.guild.name}")
 
@@ -167,7 +170,7 @@ async def propagate_embed(handle, embed):
                     # Continue
                     pass
 
-# Propagate embed
+# Propagate  message
 async def propagate_message(handle, message):
 
     # Iterate through all channels
